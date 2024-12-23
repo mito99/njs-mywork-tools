@@ -7,7 +7,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from attendance_tracker.src.reader.excel_reader import ExcelReader
+from reader.excel_reader import ExcelReader
 
 
 class TestExcelReader:
