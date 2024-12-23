@@ -7,7 +7,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from attendance_tracker.src.writer.excel_writer import ExcelWriter
+from attendance_tracker.writer.excel_writer import ExcelWriter
 
 
 class TestExcelWriter:
