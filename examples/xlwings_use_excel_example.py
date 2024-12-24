@@ -2,7 +2,7 @@ import tempfile
 import xlwings as xw
 import pandas as pd
 from pathlib import Path
-from create_shokuin import create_shokuin
+from examples.create_shokuin_example import create_shokuin
 
 def write_to_excel():
     # 出力先のパスを設定

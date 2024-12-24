@@ -26,8 +26,9 @@ def draw_text(draw, text, size, radius, center, area="top"):
     """
     font_size = int(radius * 0.35)
     try:
-        # font = ImageFont.truetype("msmincho.ttc", font_size)
-        font = ImageFont.truetype("msgothic.ttc", font_size)
+        font = ImageFont.truetype("msmincho.ttc", font_size)
+        # font = ImageFont.truetype("msgothic.ttc", font_size)
+        # font = ImageFont.truetype("SourceHanSerif-Regular.ttc", font_size)
     except:
         font = ImageFont.load_default()
     
@@ -90,9 +91,9 @@ def create_shokuin(text1, text2, text3,size=200, margin_ratio=0.1, border_width_
 
 
 def main():
-    text1 = "山田"
+    text1 = "JS"
     text2 = "2024.12.22"
-    text3 = "太郎"
+    text3 = "みと"
     img = create_shokuin(text1, text2, text3, size=400)
     img.save("./tmp/shokuin.png")
     

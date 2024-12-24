@@ -24,10 +24,16 @@ def _draw_text(draw, text, size, radius, center, area="top"):
         - center: 円の中心位置
         - bottom: 円の下部 3/4 の位置
     """
-    font_size = int(radius * 0.35)
+    if area == "top":
+        font_size = int(radius * 0.55)
+    elif area == "center":
+        font_size = int(radius * 0.38)
+    elif area == "bottom":
+        font_size = int(radius * 0.45)
+    
     try:
-        # font = ImageFont.truetype("msmincho.ttc", font_size)
-        font = ImageFont.truetype("msgothic.ttc", font_size)
+        font = ImageFont.truetype("msmincho.ttc", font_size)
+        # font = ImageFont.truetype("msgothic.ttc", font_size)
     except:
         font = ImageFont.load_default()
     
@@ -43,9 +49,9 @@ def _draw_text(draw, text, size, radius, center, area="top"):
     effective_height = 2 * radius      # 円の実効的な高さ
     
     if area == "top":
-        y = margin + (effective_height * 0.18) - (text_height / 2)
+        y = margin + (effective_height * 0.13) - (text_height / 2)
     elif area == "center":
-        y = margin + (effective_height * 0.5) - (text_height / 2)
+        y = margin + (effective_height * 0.47) - (text_height / 2)
     elif area == "bottom":
         y = margin + (effective_height * 0.8) - (text_height / 2)
     
@@ -87,3 +93,11 @@ def create_shokuin(text1, text2, text3,size=200, margin_ratio=0.1, border_width_
     _draw_text(draw, text3, size, radius, center, area="bottom")
 
     return img.filter(ImageFilter.SMOOTH)
+
+if __name__ == "__main__":
+    text1 = "JS"
+    text2 = "2024.12.22"
+    text3 = "みと"
+    img = create_shokuin(text1, text2, text3, size=400)
+    img.save("./tmp/shokuin.png")
+

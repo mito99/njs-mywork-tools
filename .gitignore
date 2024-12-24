@@ -37,3 +37,10 @@ ENV/
 # Project specific
 attendance_tracker/data/*.xlsx
 !attendance_tracker/data/template.xlsx 
+
+data/attachments/*
+data/db/*
+
+# Logs
+logs/
+*.log
