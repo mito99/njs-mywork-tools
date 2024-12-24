@@ -14,7 +14,7 @@ class TimeCardData:
         if self.work_type in ('在宅', '出勤') :
             return '出勤'
         
-        if self.work_type == '有休':
+        if self.work_type in ('有休', '有給'):
             return '有給休暇'
         
         return ""

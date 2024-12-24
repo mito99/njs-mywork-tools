@@ -79,14 +79,16 @@ class ExcelWriter:
             self._stamp_syokuin(sheet, 'S4', '山田', today, '太郎')
 
             # データ行を処理する
-            for col in range(10, 31):
+            for col in range(10, 41):
                 # 月が数字でない場合はデータ行は終わりと判定
                 cell_month = _to_int(sheet.range(f'C{col}').value, default=None)
                 if cell_month is None:
+                    print(f"データ行が終わりました: {col}")
                     break
                 
                 cell_day = _to_int(sheet.range(f'D{col}').value, default=None)
                 if cell_day is None:
+                    print(f"データ行が終わりました: {col}")
                     break
                 
                 data = date_dict.get(f"{cell_month}_{cell_day}")
@@ -95,6 +97,8 @@ class ExcelWriter:
                     sheet.range(f'F{col}').value = data.work_type_str()
                     sheet.range(f'L{col}').value = data.time_in_str()
                     sheet.range(f'M{col}').value = data.time_out_str()
+
+            wb.save()
 
     @contextmanager
     def _open_book(self) -> Generator[xw.Book, None, None]:
