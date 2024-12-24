@@ -8,7 +8,7 @@ from datetime import datetime
 
 import pandas as pd
 
-from attendance_tracker.models.timecard_data import TimeCardData
+from attendance_tracker.models.timecard_data import TimeCardData, TimeCardDataList
 
 
 class ExcelReader:
@@ -27,7 +27,7 @@ class ExcelReader:
         if not self.file_path.exists():
             raise FileNotFoundError(f"ファイルが見つかりません: {file_path}")
 
-    def read_timecard_sheet(self, start_date: datetime | None = None, end_date: datetime | None = None) -> List[TimeCardData]:
+    def read_timecard_sheet(self, start_date: datetime | None = None, end_date: datetime | None = None) -> TimeCardDataList:
         """
         Excelファイルから出退勤データを読み込む
 
@@ -66,7 +66,7 @@ class ExcelReader:
                     time_out=row['退社時間'] if pd.notna(row['退社時間']) else None,
                 ))
                 
-            return time_cards
+            return TimeCardDataList(time_cards)
             
         except Exception as e:
             raise ValueError(f"Excelファイルの読み込みに失敗しました: {str(e)}")

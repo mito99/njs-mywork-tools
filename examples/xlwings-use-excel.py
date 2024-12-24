@@ -6,7 +6,7 @@ from create_shokuin import create_shokuin
 
 def write_to_excel():
     # 出力先のパスを設定
-    output_path = Path(__file__).parent.parent / 'tests' / 'data' / 'output.xlsx'
+    output_path = Path(__file__).parent.parent / 'tests' / 'attendance_tracker' / 'data' / 'output.xlsx'
 
     try:
         with xw.App(visible=True, add_book=False) as app:
@@ -21,12 +21,18 @@ def write_to_excel():
                 with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp:
                     syokuin_image = create_shokuin('山田', '2024.12.22', '太郎', size=300)
                     syokuin_image.save(tmp.name)
+
+                    for pic in sheet.pictures:
+                        if pic.name == 'syokuin':
+                            pic.delete()
+                            
                     sheet.pictures.add(
                         tmp.name,
                         left=sheet.range('S4').left - 5,
                         top=sheet.range('S4').top - 5,
                         width=70,
                         height=70,
+                        name='syokuin'
                     )
                 
                 # 保存
