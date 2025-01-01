@@ -1,14 +1,14 @@
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, time
 from typing import List, Optional
 
 @dataclass
 class TimeCardData:
-    date: datetime
+    date: date
     holiday: bool
     work_type: str
-    time_in: Optional[datetime] = None
-    time_out: Optional[datetime] = None
+    time_in: Optional[time] = None
+    time_out: Optional[time] = None
     
     def work_type_str(self) -> str:
         if self.work_type in ('在宅', '出勤') :

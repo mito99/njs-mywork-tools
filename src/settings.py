@@ -18,11 +18,15 @@ class SurrealDBSetting(BaseModel):
     username: str
     password: str
 
+class GoogleSheetSetting(BaseModel):
+    credentials_path: str
+    spreadsheet_key: str
+
 class Settings(BaseSettings):
     denbun: DenbunSetting
     playwright: PlaywrightSetting
     surrealdb: SurrealDBSetting
-
+    google_sheet: GoogleSheetSetting
     model_config = SettingsConfigDict(
         yaml_file='settings.yaml', 
         env_file='.env',
