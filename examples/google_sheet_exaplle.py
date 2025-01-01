@@ -23,8 +23,8 @@ def get_timesheet_data():
     service = build('sheets', 'v4', credentials=credentials)
 
     # スプレッドシートIDとレンジの指定
-    SPREADSHEET_ID = '1d-ja9DnY2NhO_i3Je3Z9lb3bLr3tsR00ImnafWCjsJQ'
-    RANGE_NAME = 'Timecard!A2:F'
+    SPREADSHEET_ID = os.getenv('GOOGLE_SHEET_ID')
+    RANGE_NAME = os.getenv('GOOGLE_SHEET_RANGE')
 
     # データの取得
     result = service.spreadsheets().values().get(

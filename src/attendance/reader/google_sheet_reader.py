@@ -2,7 +2,7 @@
 Google Sheetsからデータを読み込むモジュール
 """
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import List
 import pandas as pd
 from google.oauth2.service_account import Credentials
@@ -39,7 +39,7 @@ class GoogleSheetReader:
         except Exception as e:
             raise ValueError(f"Google Sheetsの認証に失敗しました: {str(e)}")
 
-    def read_timecard_sheet(self, start_date: datetime | None = None, end_date: datetime | None = None) -> TimeCardDataList:
+    def read_timecard_sheet(self, start_date: date | None = None, end_date: date | None = None) -> TimeCardDataList:
         """
         Google Sheetsから出退勤データを読み込む
 
@@ -65,7 +65,12 @@ class GoogleSheetReader:
             time_cards = []
             for row in values:
                 date = datetime.strptime(row[0].split(' ')[0], '%Y/%m/%d').date()
-                holiday = (row[1] if len(row) > 1 else '').strip() != ''
+                if start_date and date < start_date:
+                    continue
+                if end_date and date > end_date:
+                    break
+
+                holiday = row[1].strip() != '' if len(row) > 1 else False
                 work_type = row[2] if len(row) > 2 else ''
                 time_in = datetime.strptime(row[3], '%H:%M').time() if len(row) > 3 else None
                 time_out = datetime.strptime(row[4], '%H:%M').time() if len(row) > 4 else None
@@ -103,4 +108,7 @@ if __name__ == '__main__':
         credentials_path=settings.google_sheet.credentials_path,
         spreadsheet_key=settings.google_sheet.spreadsheet_key
     )
-    reader.read_timecard_sheet()
+    reader.read_timecard_sheet(
+        start_date=datetime(2024, 12, 21).date(), 
+        end_date=datetime(2024, 12, 31).date()
+    )
