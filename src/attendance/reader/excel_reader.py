@@ -8,7 +8,7 @@ from datetime import datetime
 
 import pandas as pd
 
-from attendance_tracker.models.timecard_data import TimeCardData, TimeCardDataList
+from attendance.models.timecard_data import TimeCardData, TimeCardDataList
 
 
 class ExcelReader:

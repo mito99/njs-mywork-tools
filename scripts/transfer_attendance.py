@@ -10,8 +10,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from attendance_tracker.reader.excel_reader import ExcelReader
-from attendance_tracker.writer.excel_writer import ExcelWriter
+from attendance.reader.excel_reader import ExcelReader
+from attendance.writer.excel_writer import ExcelWriter
 
 
 def parse_date(date_str: str) -> datetime:

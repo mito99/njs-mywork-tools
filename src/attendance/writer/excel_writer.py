@@ -12,7 +12,7 @@ import xlwings as xw
 
 import pandas as pd
 
-from attendance_tracker.models.timecard_data import TimeCardData, TimeCardDataList
+from attendance.models.timecard_data import TimeCardData, TimeCardDataList
 from utils.shokuin import create_shokuin
 
 from .. import settings

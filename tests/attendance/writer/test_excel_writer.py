@@ -8,8 +8,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 import xlwings as xw
 
-from attendance_tracker.writer.excel_writer import ExcelWriter
-from attendance_tracker.models.timecard_data import TimeCardData, TimeCardDataList
+from attendance.writer.excel_writer import ExcelWriter
+from attendance.models.timecard_data import TimeCardData, TimeCardDataList
 
 
 class TestExcelWriter:
