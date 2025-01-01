@@ -44,3 +44,5 @@ data/db/*
 # Logs
 logs/
 *.log
+
+.auth
