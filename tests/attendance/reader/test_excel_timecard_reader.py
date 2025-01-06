@@ -8,10 +8,10 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from attendance.reader.excel_reader import ExcelReader
+from attendance.reader.excel_timecard_reader import ExcelTimeCardReader
 
 
-class TestExcelReader:
+class TestExcelTimeCardReader:
     """
     ExcelReaderのテストクラス
     """
@@ -30,7 +30,7 @@ class TestExcelReader:
         """
         正常系: 実際のExcelファイルの読み込みが成功することを確認
         """
-        reader = ExcelReader(actual_excel_path)
+        reader = ExcelTimecardReader(actual_excel_path)
         time_cards = reader.read_timecard_sheet(
             start_date=datetime(2024, 11, 21),
             end_date=datetime(2024, 12, 20),
@@ -42,6 +42,6 @@ class TestExcelReader:
         """
         異常系: 存在しないファイルを指定した場合にエラーとなることを確認
         """
-        reader = ExcelReader(Path("not_exists.xlsx"))
+        reader = ExcelTimecardReader(Path("not_exists.xlsx"))
         with pytest.raises(RuntimeError):
             reader.read()

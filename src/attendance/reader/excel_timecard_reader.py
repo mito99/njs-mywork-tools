@@ -12,7 +12,7 @@ from attendance.models.timecard_data import TimeCardData, TimeCardDataList
 from attendance.reader.timecard_reader import TimeCardReader
 
 
-class ExcelReader(TimeCardReader):
+class ExcelTimecardReader(TimeCardReader):
     """
     Excelファイルから勤怠データを読み込むクラス
     """

@@ -12,10 +12,13 @@ import xlwings as xw
 
 import pandas as pd
 
+from attendance.models import employee
+from attendance.models.employee import Employee
 from attendance.models.timecard_data import TimeCardData, TimeCardDataList
+from settings import Settings
 from utils.shokuin import create_shokuin
 
-from .. import settings
+settings = Settings()
 
 
 def _to_int(value: str, default: int = 0) -> int:
@@ -40,28 +43,31 @@ class ExcelWriter:
     処理結果をExcelファイルに出力するクラス
     """
 
-    def __init__(self, file_path: Path):
+    def __init__(self, file_path: Path, employee: Employee):
         self.file_path = file_path
+        self.employee = employee
 
-    def _stamp_syokuin(self, sheet: xw.Sheet, cell:str, text1:str, text2:str, text3:str) -> None:
+    def _stamp_syokuin(
+        self, sheet: xw.Sheet, cell: str, text1: str, text2: str, text3: str
+    ) -> None:
         """
         出勤印を押す
         """
-        with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp:
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
             syokuin_image = create_shokuin(text1, text2, text3, size=300)
             syokuin_image.save(tmp.name)
 
             for pic in sheet.pictures:
-                if pic.name == 'syokuin':
+                if pic.name == "syokuin":
                     pic.delete()
-            
+
             sheet.pictures.add(
                 tmp.name,
                 left=sheet.range(cell).left - 5,
                 top=sheet.range(cell).top - 5,
                 width=70,
                 height=70,
-                name='syokuin'
+                name="syokuin",
             )
 
     def write(self, month: int, time_cards: TimeCardDataList) -> None:
@@ -69,34 +75,46 @@ class ExcelWriter:
         処理結果をExcelファイルに出力する
         """
         date_dict = time_cards.to_date_dict()
-        
+
         with self._open_book() as wb:
             sheet = wb.sheets[f"{month}月"]
             sheet.activate()
-            
+
             # 職印を押す
-            today = datetime.now().strftime('%Y.%m.%d')
-            self._stamp_syokuin(sheet, 'S4', '山田', today, '太郎')
+            today = datetime.now().strftime("%Y.%m.%d")
+            self._stamp_syokuin(sheet, "S4", "JS", today, self.employee.family_name)
 
             # データ行を処理する
             for col in range(10, 41):
                 # 月が数字でない場合はデータ行は終わりと判定
-                cell_month = _to_int(sheet.range(f'C{col}').value, default=None)
+                cell_month = _to_int(sheet.range(f"C{col}").value, default=None)
                 if cell_month is None:
                     print(f"データ行が終わりました: {col}")
                     break
-                
-                cell_day = _to_int(sheet.range(f'D{col}').value, default=None)
+
+                cell_day = _to_int(sheet.range(f"D{col}").value, default=None)
                 if cell_day is None:
                     print(f"データ行が終わりました: {col}")
                     break
-                
+
                 data = date_dict.get(f"{cell_month}_{cell_day}")
-                
+
                 if data:
-                    sheet.range(f'F{col}').value = data.work_type_str()
-                    sheet.range(f'L{col}').value = data.time_in_str()
-                    sheet.range(f'M{col}').value = data.time_out_str()
+                    sheet.range(f"F{col}").value = data.work_type_str()
+                    sheet.range(f"L{col}").value = data.time_in_str()
+                    sheet.range(f"M{col}").value = data.time_out_str()
+                    sheet.range(f"U{col}").value = (
+                        "1" if data.work_type == "出勤" else ""
+                    )
+                    sheet.range(f"V{col}").value = (
+                        "1" if data.work_type == "在宅" else ""
+                    )
+                else:
+                    sheet.range(f"F{col}").value = ""
+                    sheet.range(f"L{col}").value = ""
+                    sheet.range(f"M{col}").value = ""
+                    sheet.range(f"U{col}").value = ""
+                    sheet.range(f"V{col}").value = ""
 
             wb.save()
 
@@ -105,6 +123,6 @@ class ExcelWriter:
         """
         Excelファイルを開く
         """
-        with xw.App(visible=True, add_book=False) as app:
+        with xw.App(visible=settings.xlwings.visible, add_book=False) as app:
             with app.books.open(self.file_path) as wb:
                 yield wb
