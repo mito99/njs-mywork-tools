@@ -45,6 +45,7 @@ def create_time_card_reader(source: str | Path):
 
 def invoke(
     source: str | Path,
+    template_file: str | Path,
     output_file: str | Path,
     name: str,
     month: Optional[int] = None,
@@ -56,6 +57,7 @@ def invoke(
 
     Args:
         source: (str | Path): タイムカードソース("google" or Excelファイルパス)
+        template_file (str | Path): テンプレートExcelファイルのパス
         output_file (str | Path): 出力用Excelファイルのパス
         name (str): 氏名
         month (Optional[int], optional): 対象月 (1-12). Defaults to None.
@@ -68,9 +70,12 @@ def invoke(
     """
     # パスの検証
     output_path = Path(output_file)
-
-    if not output_path.exists():
-        raise FileNotFoundError(f"出力ファイルが見つかりません: {output_path}")
+    if not output_path.parent.exists():
+        raise FileNotFoundError(f"出力先ディレクトリが存在しません: {output_path.parent}")
+    
+    template_path = Path(template_file)    
+    if not template_path.exists():
+        raise FileNotFoundError(f"テンプレートファイルが見つかりません: {template_path}")
 
     # 日付の変換
     start_date_obj = parse_date(start_date) if start_date else None
@@ -84,10 +89,10 @@ def invoke(
     try:
         employee = Employee.from_full_name(name)
         reader = create_time_card_reader(source)
-        writer = ExcelWriter(output_path, employee)
+        writer = ExcelWriter(template_path, employee)
 
         time_cards = reader.read_timecard_sheet(start_date_obj, end_date_obj)
-        writer.write(month or datetime.now().month, time_cards)
+        writer.write_to_file(output_path, month or datetime.now().month, time_cards)
 
         print("勤怠データの転記が完了しました")
 
@@ -100,6 +105,7 @@ def main():
     """コマンドライン引数をパースしてinvoke関数を実行する"""
     parser = argparse.ArgumentParser(description="勤怠データを転記します")
     parser.add_argument("output_file", type=str, help="出力用Excelファイルのパス")
+    parser.add_argument("template_file", type=str, help="テンプレートExcelファイルのパス")
     parser.add_argument("-n", "--name", type=str, help="氏名 (例:山田 太郎)")
     parser.add_argument("-m", "--month", type=int, help="対象月 (1-12)")
     parser.add_argument("-s", "--start_date", type=str, help="開始日 (YYYY-MM-DD形式)")
@@ -115,6 +121,7 @@ def main():
 
     invoke(
         source=args.source,
+        template_file=args.template_file,
         output_file=args.output_file,
         name=args.name,
         month=args.month,
@@ -127,7 +134,8 @@ if __name__ == "__main__":
     # main()
     invoke(
         source="google",
-        output_file="tests/attendance/data/output.xlsx",
+        output_file="tmp/output.xlsx",
+        template_file="tests/attendance/data/template.xlsx",
         month=1,
         start_date="2024-12-21",
         end_date="2025-01-20",

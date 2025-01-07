@@ -4,9 +4,11 @@
 
 from contextlib import contextmanager
 from datetime import datetime
+from io import BytesIO
+import os
 from pathlib import Path
 import tempfile
-from typing import List, Generator
+from typing import BinaryIO, Generator
 
 import xlwings as xw
 
@@ -43,8 +45,8 @@ class ExcelWriter:
     処理結果をExcelファイルに出力するクラス
     """
 
-    def __init__(self, file_path: Path, employee: Employee):
-        self.file_path = file_path
+    def __init__(self, template_path: Path, employee: Employee):
+        self.template_path = template_path
         self.employee = employee
 
     def _stamp_syokuin(
@@ -70,9 +72,30 @@ class ExcelWriter:
                 name="syokuin",
             )
 
-    def write(self, month: int, time_cards: TimeCardDataList) -> None:
+    def write(self, output: BinaryIO, month: int, time_cards: TimeCardDataList) -> None:
         """
-        処理結果をExcelファイルに出力する
+        タイムカードデータをExcelファイルに書き出す
+
+        Args:
+            output (BinaryIO): 出力先のファイルパス
+            month (int): 対象月
+            time_cards (TimeCardDataList): タイムカードデータ
+        """
+        with tempfile.NamedTemporaryFile(delete=False) as tmp:
+            self.write_to_file(tmp.name, month, time_cards)
+            
+            with open(tmp.name, "rb") as f:
+                output.write(f.read())
+            os.unlink(tmp.name)
+
+    def write_to_file(self, output_path: Path, month: int, time_cards: TimeCardDataList) -> None:
+        """
+        タイムカードデータをExcelファイルに書き出す
+
+        Args:
+            output_path (Path): 出力先のファイルパス
+            month (int): 対象月
+            time_cards (TimeCardDataList): タイムカードデータ
         """
         date_dict = time_cards.to_date_dict()
 
@@ -116,7 +139,7 @@ class ExcelWriter:
                     sheet.range(f"U{col}").value = ""
                     sheet.range(f"V{col}").value = ""
 
-            wb.save()
+            wb.save(output_path)
 
     @contextmanager
     def _open_book(self) -> Generator[xw.Book, None, None]:
@@ -124,5 +147,5 @@ class ExcelWriter:
         Excelファイルを開く
         """
         with xw.App(visible=settings.xlwings.visible, add_book=False) as app:
-            with app.books.open(self.file_path) as wb:
+            with app.books.open(self.template_path) as wb:
                 yield wb

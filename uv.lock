@@ -338,7 +338,7 @@ wheels = [
 ]
 
 [[package]]
-name = "mywork-tools"
+name = "njs-mywork-tools"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
