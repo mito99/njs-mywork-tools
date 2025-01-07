@@ -1,0 +1,3 @@
+"""
+njs-mywork-tools package
+""" 

@@ -11,15 +11,14 @@ from pathlib import Path
 from typing import Optional
 from venv import create
 
-from attendance.models.employee import Employee
-from attendance.reader import timecard_reader
-from attendance.reader.excel_timecard_reader import ExcelTimecardReader
-from attendance.reader.google_timecard_reader import GoogleTimeCardReader
-from attendance.reader.timecard_reader import TimeCardReader
-from attendance.writer.excel_writer import ExcelWriter
-import settings
+from njs_mywork_tools.attendance.models.employee import Employee
+from njs_mywork_tools.attendance.reader.excel_timecard_reader import ExcelTimecardReader
+from njs_mywork_tools.attendance.reader.google_timecard_reader import GoogleTimeCardReader
+from njs_mywork_tools.attendance.reader.timecard_reader import TimeCardReader
+from njs_mywork_tools.attendance.writer.excel_writer import ExcelWriter
+from njs_mywork_tools.settings import Settings
 
-settings = settings.Settings()
+settings = Settings()
 
 
 def parse_date(date_str: str) -> date:
