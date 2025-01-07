@@ -1,5 +1,5 @@
 [project]
-name = "mywork-tools"
+name = "njs-mywork-tools"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -21,4 +21,4 @@ dependencies = [
 ]
 
 [tool.setuptools]
-package-dir = {"" = "src"}
+package-dir = { "" = "src" }
