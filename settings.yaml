@@ -1,5 +1,0 @@
-playwright:
-  headless: false
-
-xlwings:
-  visible: false
