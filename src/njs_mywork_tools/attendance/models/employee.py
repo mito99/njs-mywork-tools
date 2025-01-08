@@ -1,15 +1,15 @@
 import re
-from dataclasses import dataclass
+
+from pydantic import BaseModel, Field
 
 
-@dataclass
-class Employee:
+class Employee(BaseModel):
     """
     従業員の姓名を保持するデータクラス
     """
 
-    given_name: str
-    family_name: str
+    given_name: str = Field(alias="given_name")
+    family_name: str = Field(alias="family_name")
 
     def full_name(self) -> str:
         """

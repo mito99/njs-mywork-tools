@@ -8,17 +8,17 @@ from contextlib import contextmanager
 from datetime import datetime
 from io import BytesIO
 from pathlib import Path
-from typing import BinaryIO, Generator
+from typing import BinaryIO, Generator, TypedDict
 
 import xlwings as xw
 
 from njs_mywork_tools.attendance.models.employee import Employee
 from njs_mywork_tools.attendance.models.timecard_data import TimeCardDataList
-from njs_mywork_tools.settings import Settings
 from njs_mywork_tools.utils.shokuin import create_shokuin
 
-settings = Settings()
 
+class ConfigDict(TypedDict):
+    xlwings_visible: bool
 
 def _to_int(value: str, default: int = 0) -> int:
     """
@@ -42,9 +42,12 @@ class ExcelWriter:
     処理結果をExcelファイルに出力するクラス
     """
 
-    def __init__(self, template_path: Path, employee: Employee):
+    def __init__(self, template_path: Path, employee: Employee, config: ConfigDict ={
+        "xlwings_visible": False
+    }):
         self.template_path = template_path
         self.employee = employee
+        self.xlwings_visible = config.get("xlwings_visible", False)
 
     def _stamp_syokuin(
         self, sheet: xw.Sheet, cell: str, text1: str, text2: str, text3: str
@@ -136,13 +139,16 @@ class ExcelWriter:
                     sheet.range(f"U{col}").value = ""
                     sheet.range(f"V{col}").value = ""
 
-            wb.save(output_path)
+            if output_path == self.template_path:
+                wb.save()
+            else:
+                wb.save(output_path)
 
     @contextmanager
     def _open_book(self) -> Generator[xw.Book, None, None]:
         """
         Excelファイルを開く
         """
-        with xw.App(visible=settings.xlwings.visible, add_book=False) as app:
+        with xw.App(visible=self.xlwings_visible, add_book=False) as app:
             with app.books.open(self.template_path) as wb:
                 yield wb
