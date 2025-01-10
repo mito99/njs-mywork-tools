@@ -6,13 +6,13 @@ from typing import Optional
 
 from playwright.async_api import (Browser, BrowserContext, Page,
                                   async_playwright)
-from utils.logger import setup_logger
 
 from njs_mywork_tools.mail.core.session import SessionManager
 from njs_mywork_tools.mail.operations.recieve import (MailRecieveOperation,
                                                       RecieveMessageResult)
 from njs_mywork_tools.mail.operations.search import MailSearchOperation
 from njs_mywork_tools.settings import Settings
+from njs_mywork_tools.utils.logger import setup_logger
 
 
 class DenbunMailClient:

@@ -6,7 +6,7 @@ from njs_mywork_tools.mail.models.entities import (AttachmentEntity,
                                                    RecipientEntity)
 from njs_mywork_tools.mail.models.message import MailMessage
 from njs_mywork_tools.settings import SurrealDBSetting
-from storage.database import Database
+from njs_mywork_tools.storage import Database
 
 
 class MailRepository:
@@ -28,7 +28,7 @@ class MailRepository:
                 # 受信者エンティティの作成
                 recipient_ids = []
                 for recipient in mail_message.recipients:
-                    id = str(uuid4())
+                    id = str(uuid4()).replace("-", "")
                     recipient_entity = RecipientEntity(
                         id=id,
                         mail_message_id=mail_message.id,
@@ -41,7 +41,7 @@ class MailRepository:
                 # 添付ファイルエンティティの作成
                 attachment_ids = []
                 for attachment in mail_message.attachments:
-                    id = str(uuid4())
+                    id = str(uuid4()).replace("-", "")
                     attachment_entity = AttachmentEntity(
                         id=id,
                         mail_message_id=mail_message.id,
@@ -69,18 +69,18 @@ class MailRepository:
 
 
 
-    async def find_by_id(self, message_id: str) -> MailMessage:
+    async def find_by_id(self, message_id: str) -> MailMessageEntity:
         """IDによるメールメッセージの検索"""
         async with self.db:
             surql = """
-                SELECT *, 
-                FETCH recipients,
-                FETCH attachments 
-                FROM mail_messages:$id
+                SELECT *
+                FROM type::thing("mail_messages", $id)
+                FETCH recipients, attachments
             """
             result = await self.db.query(surql, {"id": message_id})
 
-            return self._convert_surreal_result_to_entity(result)
+            data = result[0]['result'][0]
+            return self._convert_surreal_result_to_entity(data)
 
     def _convert_surreal_result_to_entity(self, result: Dict[str, Any]) -> MailMessageEntity:
         if isinstance(result, list):
@@ -132,3 +132,17 @@ class MailRepository:
             
             count = safe_get_nested(result, default=0)
             return count > 0
+
+if __name__ == "__main__":
+    import asyncio
+
+    from njs_mywork_tools.settings import Settings
+        
+    async def main():
+        settings = Settings().surrealdb
+        repos = MailRepository(settings)
+        mail_msg = await repos.find_by_id("INBOX_2654")
+        print(mail_msg)
+
+    asyncio.run(main())
+

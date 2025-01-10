@@ -1,8 +1,10 @@
-import asyncio
 import argparse
+import asyncio
 from datetime import datetime
-from mail.client import DenbunMailClient
-from settings import Settings
+
+from njs_mywork_tools.mail.client import DenbunMailClient
+from njs_mywork_tools.settings import Settings
+
 
 def parse_datetime(date_str: str) -> datetime:
     """日付文字列をdatetimeオブジェクトに変換"""
@@ -44,4 +46,4 @@ def main():
 
 if __name__ == "__main__":
     # main() 
-    asyncio.run(receive_mail("2023-01-01 00:00:00", "2024-12-31 23:59:59", "test"))
+    asyncio.run(receive_mail("2024-06-01 00:00:00", "9999-12-31 23:59:59", "test"))

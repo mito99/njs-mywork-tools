@@ -2,9 +2,10 @@ import asyncio
 from datetime import datetime
 from typing import AsyncIterator, List, Optional
 
-from mail.core.exceptions import MailOperationError
-from mail.models.message import MailMessage
 from playwright.async_api import Page
+
+from njs_mywork_tools.mail.core.exceptions import MailOperationError
+from njs_mywork_tools.mail.models.message import MailMessage
 
 
 class MailSearchOperation:
@@ -89,7 +90,7 @@ class MailSearchOperation:
                 
                 # 時系列順に並んでる前提
                 if end_date and message.received_at > end_date:
-                    break
+                    continue
                 if start_date and message.received_at < start_date:
                     break
                     
