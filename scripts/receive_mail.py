@@ -46,4 +46,4 @@ def main():
 
 if __name__ == "__main__":
     # main() 
-    asyncio.run(receive_mail("2024-06-01 00:00:00", "9999-12-31 23:59:59", "test"))
+    asyncio.run(receive_mail("2025-01-01 00:00:00", "9999-12-31 23:59:59", "test"))

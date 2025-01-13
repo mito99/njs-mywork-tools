@@ -12,5 +12,6 @@ class MailMessage:
     received_at: datetime
     body: str
     sender: str
-    recipients: List[str] 
+    to_addresses: List[str] 
+    cc_addresses: List[str]
     attachments: List[str]

@@ -6,13 +6,14 @@ from typing import AsyncGenerator, TypedDict
 from surrealdb import Surreal
 
 from njs_mywork_tools.mail.models.entities import MailMessageEntity
+from njs_mywork_tools.mail.models.message import MailMessage
 from njs_mywork_tools.mail.repository import MailRepository
 from njs_mywork_tools.settings import Settings, SurrealDBSetting
 
 
 class MailChangeEvent(TypedDict):
     action: str
-    mail_msg: MailMessageEntity
+    mail_msg: MailMessage
 
 class MailWatcher:
     

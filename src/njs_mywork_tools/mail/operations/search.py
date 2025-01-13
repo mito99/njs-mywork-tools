@@ -117,6 +117,9 @@ class MailSearchOperation:
         to_elements = await self.page.locator(".mail-view-header-to a[data-value]").all()
         to_addresses = [await el.get_attribute("data-value") for el in to_elements]
         
+        cc_elements = await self.page.locator(".mail-view-header-cc a[data-value]").all()
+        cc_addresses = [await el.get_attribute("data-value") for el in cc_elements]
+        
         receive_date = await self.page.locator(".mail-view-header-datetime").nth(1).text_content()
         subject = await self.page.locator("#mail-view-subject").text_content()
         
@@ -138,7 +141,8 @@ class MailSearchOperation:
             received_at=received_at,
             body=body or "",
             sender=from_address or "",
-            recipients=to_addresses,
+            to_addresses=to_addresses,
+            cc_addresses=cc_addresses,
             attachments=attachments
         )
 
