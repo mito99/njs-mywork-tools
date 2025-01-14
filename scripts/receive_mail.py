@@ -2,7 +2,8 @@ import argparse
 import asyncio
 from datetime import datetime
 
-from njs_mywork_tools.mail.client import DenbunMailClient
+from njs_mywork_tools.mail.client import (DenbunMailClient,
+                                          DenbunMailClientOptions)
 from njs_mywork_tools.settings import Settings
 
 
@@ -13,7 +14,13 @@ def parse_datetime(date_str: str) -> datetime:
 async def receive_mail(start_date: str, end_date: str, keyword: str):
     """メール受信を実行する関数"""
     setting = Settings()
-    client = DenbunMailClient(setting)
+    options = DenbunMailClientOptions(
+        denbun_setting=setting.denbun,
+        surrealdb_setting=setting.surrealdb,
+        playwright_headless=setting.playwright.headless,
+        xlwings_visible=setting.xlwings.visible,
+    )
+    client = DenbunMailClient(options)
     
     try:
         start = parse_datetime(start_date)

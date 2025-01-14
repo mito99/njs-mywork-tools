@@ -3,7 +3,7 @@ from typing import List
 
 from njs_mywork_tools.mail.models.message import MailMessage
 from njs_mywork_tools.mail.repository import MailRepository
-from njs_mywork_tools.settings import Settings
+from njs_mywork_tools.settings import Settings, SurrealDBSetting
 
 
 class RecieveMessageResult(Enum):
@@ -15,8 +15,8 @@ class RecieveMessageResult(Enum):
 class MailRecieveOperation:
     """メール受信操作を行うクラス"""
     
-    def __init__(self, settings: Settings):
-        self.repository = MailRepository(settings.surrealdb)
+    def __init__(self, surrealdb_setting: SurrealDBSetting):
+        self.repository = MailRepository(surrealdb_setting)
 
     async def recieve_message(
         self,

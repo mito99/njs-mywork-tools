@@ -6,21 +6,29 @@ from typing import Optional
 
 from playwright.async_api import (Browser, BrowserContext, Page,
                                   async_playwright)
+from pydantic import BaseModel
 
 from njs_mywork_tools.mail.core.session import SessionManager
 from njs_mywork_tools.mail.operations.recieve import (MailRecieveOperation,
                                                       RecieveMessageResult)
 from njs_mywork_tools.mail.operations.search import MailSearchOperation
-from njs_mywork_tools.settings import Settings
+from njs_mywork_tools.settings import (DenbunSetting, GoogleSheetSetting,
+                                       SurrealDBSetting)
 from njs_mywork_tools.utils.logger import setup_logger
 
+
+class DenbunMailClientOptions(BaseModel):
+    denbun_setting: DenbunSetting
+    surrealdb_setting: SurrealDBSetting
+    playwright_headless: bool = False
+    xlwings_visible: bool = False
 
 class DenbunMailClient:
     """
     DenbunMailClient is a client for Denbun Mail.
     """
-    def __init__(self, setting: Settings):
-        self.setting = setting
+    def __init__(self, options: DenbunMailClientOptions):
+        self.options = options
         self.playwright = None
         self.browser: Optional[Browser] = None
         self.context: Optional[BrowserContext] = None
@@ -40,13 +48,13 @@ class DenbunMailClient:
         self.logger.info("Initializing DenbunMailClient...")
         self.playwright = await async_playwright().start()
         self.browser = await self.playwright.chromium.launch(
-            headless=self.setting.playwright.headless
+            headless=self.options.playwright_headless
         )
         self.context = await self.browser.new_context()
         self.page = await self.context.new_page()
-        self.session = SessionManager(self.page, self.setting.denbun)
+        self.session = SessionManager(self.page, self.options.denbun_setting)
         self.search_operation = MailSearchOperation(self.page)
-        self.recieve_operation = MailRecieveOperation(self.setting)
+        self.recieve_operation = MailRecieveOperation(self.options.surrealdb_setting)
         self.logger.info("DenbunMailClient initialized successfully")
 
     async def close(self):
@@ -128,8 +136,15 @@ class DenbunMailClient:
             self.logger.info("Mail reception completed successfully")
 
 async def main():
+    from njs_mywork_tools.settings import Settings
     setting = Settings()
-    client = DenbunMailClient(setting)
+    options = DenbunMailClientOptions(
+        denbun_setting=setting.denbun,
+        surrealdb_setting=setting.surrealdb,
+        playwright_headless=setting.playwright.headless,
+        xlwings_visible=setting.xlwings.visible,
+    )
+    client = DenbunMailClient(options)
     try:
         await client.initialize()
         # await client.send_mail("test@example.com", "test", "test")
