@@ -4,17 +4,23 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from playwright.async_api import (Browser, BrowserContext, Page,
-                                  async_playwright)
+from playwright.async_api import Browser, BrowserContext, Page, async_playwright
 from pydantic import BaseModel
 
 from njs_mywork_tools.mail.core.session import SessionManager
-from njs_mywork_tools.mail.operations.recieve import (MailRecieveOperation,
-                                                      RecieveMessageResult)
+from njs_mywork_tools.mail.operations.recieve import (
+    MailRecieveOperation,
+    RecieveMessageResult,
+)
 from njs_mywork_tools.mail.operations.search import MailSearchOperation
-from njs_mywork_tools.settings import (DenbunSetting, GoogleSheetSetting,
-                                       SurrealDBSetting)
+from njs_mywork_tools.settings import (
+    DenbunSetting,
+    GoogleSheetSetting,
+    SurrealDBSetting,
+)
 from njs_mywork_tools.utils.logger import setup_logger
+
+logger = setup_logger(name=__name__, log_file=Path("logs/denbun_mail.log"))
 
 
 class DenbunMailClientOptions(BaseModel):
@@ -23,10 +29,12 @@ class DenbunMailClientOptions(BaseModel):
     playwright_headless: bool = False
     xlwings_visible: bool = False
 
+
 class DenbunMailClient:
     """
     DenbunMailClient is a client for Denbun Mail.
     """
+
     def __init__(self, options: DenbunMailClientOptions):
         self.options = options
         self.playwright = None
@@ -36,16 +44,10 @@ class DenbunMailClient:
         self.session: Optional[SessionManager] = None
         self.search_operation: Optional[MailSearchOperation] = None
         self.recieve_operation: Optional[MailRecieveOperation] = None
-        
-        # ロガーの初期化
-        self.logger = setup_logger(
-            name=self.__class__.__name__,
-            log_file=Path("logs/denbun_mail.log")
-        )
 
     async def initialize(self):
         """Initialize Playwright resources"""
-        self.logger.info("Initializing DenbunMailClient...")
+        logger.info("Initializing DenbunMailClient...")
         self.playwright = await async_playwright().start()
         self.browser = await self.playwright.chromium.launch(
             headless=self.options.playwright_headless
@@ -55,88 +57,88 @@ class DenbunMailClient:
         self.session = SessionManager(self.page, self.options.denbun_setting)
         self.search_operation = MailSearchOperation(self.page)
         self.recieve_operation = MailRecieveOperation(self.options.surrealdb_setting)
-        self.logger.info("DenbunMailClient initialized successfully")
+        logger.info("DenbunMailClient initialized successfully")
 
     async def close(self):
         """Clean up Playwright resources"""
-        self.logger.info("Cleaning up Playwright resources...")
+        logger.info("Cleaning up Playwright resources...")
         if self.context:
             await self.context.close()
         if self.browser:
             await self.browser.close()
         if self.playwright:
             await self.playwright.stop()
-        self.logger.info("Cleanup completed")
+        logger.info("Cleanup completed")
 
     async def send_mail(self, to: str, subject: str, body: str):
         """Send mail using Denbun Mail"""
         if not self.session:
-            self.logger.info("Session not initialized. Initializing...")
+            logger.info("Session not initialized. Initializing...")
             await self.initialize()
         try:
-            self.logger.info(f"Sending mail to: {to}, subject: {subject}")
+            logger.info(f"Sending mail to: {to}, subject: {subject}")
             await self.session.ensure_logged_in()
             # メール送信の実装をここに追加
         except Exception as e:
-            self.logger.error(f"Failed to send mail: {str(e)}", exc_info=True)
+            logger.error(f"Failed to send mail: {str(e)}", exc_info=True)
             await self.close()
             raise Exception(f"Failed to send mail: {str(e)}")
         else:
-            self.logger.info("Mail sent successfully")
+            logger.info("Mail sent successfully")
 
     async def search_mail(self, start_date: datetime, end_date: datetime, keyword: str):
         """Search mail using Denbun Mail"""
         if not self.session:
-            self.logger.info("Session not initialized. Initializing...")
+            logger.info("Session not initialized. Initializing...")
             await self.initialize()
         try:
-            self.logger.info(
+            logger.info(
                 f"Searching mail (start: {start_date}, end: {end_date}, keyword: {keyword})"
             )
             await self.session.ensure_logged_in()
             await self.search_operation.search_messages(
-                start_date=start_date, 
-                end_date=end_date, 
-                keyword=keyword
+                start_date=start_date, end_date=end_date, keyword=keyword
             )
         except Exception as e:
-            self.logger.error(f"Failed to search mail: {str(e)}", exc_info=True)
+            logger.error(f"Failed to search mail: {str(e)}", exc_info=True)
             await self.close()
             raise Exception(f"Failed to search mail: {str(e)}")
         else:
-            self.logger.info("Mail search completed successfully")
+            logger.info("Mail search completed successfully")
 
-    async def receive_mail(self, start_date: datetime, end_date: datetime, keyword: str):
+    async def receive_mail(
+        self, start_date: datetime, end_date: datetime, keyword: str
+    ):
         """Receive mail using Denbun Mail"""
         if not self.session:
-            self.logger.info("Session not initialized. Initializing...")
+            logger.info("Session not initialized. Initializing...")
             await self.initialize()
         try:
-            self.logger.info(
+            logger.info(
                 f"Starting mail reception (start: {start_date}, end: {end_date}, keyword: {keyword})"
             )
             await self.session.ensure_logged_in()
             messages = self.search_operation.search_messages_iter(
-                start_date=start_date, 
-                end_date=end_date, 
-                keyword=keyword
+                start_date=start_date, end_date=end_date, keyword=keyword
             )
             async for message in messages:
                 result = await self.recieve_operation.recieve_message(message)
                 if result == RecieveMessageResult.ALREADY_EXISTS:
-                    self.logger.info("Found existing message. Stopping reception.")
+                    logger.info("Found existing message. Stopping reception.")
                     break
-                self.logger.debug(f"Received message: {message.subject}")
-                
+                logger.debug(f"Received message: {message.subject}")
+
         except Exception as e:
-            self.logger.error(f"Failed to receive mail: {str(e)}", exc_info=True)
+            logger.error(f"Failed to receive mail: {str(e)}", exc_info=True)
             await self.close()
             raise Exception(f"Failed to receive mail: {str(e)}")
         else:
-            self.logger.info("Mail reception completed successfully")
+            logger.info("Mail reception completed successfully")
+
 
 async def main():
     from njs_mywork_tools.settings import Settings
+
     setting = Settings()
     options = DenbunMailClientOptions(
         denbun_setting=setting.denbun,
@@ -154,6 +156,7 @@ async def main():
         raise
     finally:
         await client.close()
+
 
 if __name__ == "__main__":
     asyncio.run(main())
