@@ -13,6 +13,7 @@ from njs_mywork_tools.mail.operations.recieve import (
     RecieveMessageResult,
 )
 from njs_mywork_tools.mail.operations.search import MailSearchOperation
+from njs_mywork_tools.mail.operations.send import MailSendOperation, SendMailMessage
 from njs_mywork_tools.settings import (
     DenbunSetting,
     GoogleSheetSetting,
@@ -44,6 +45,7 @@ class DenbunMailClient:
         self.session: Optional[SessionManager] = None
         self.search_operation: Optional[MailSearchOperation] = None
         self.recieve_operation: Optional[MailRecieveOperation] = None
+        self.send_operation: Optional[MailSendOperation] = None
 
     async def initialize(self):
         """Initialize Playwright resources"""
@@ -54,6 +56,7 @@ class DenbunMailClient:
         )
         self.context = await self.browser.new_context()
         self.page = await self.context.new_page()
+        self.send_operation = MailSendOperation(self.page)
         self.session = SessionManager(self.page, self.options.denbun_setting)
         self.search_operation = MailSearchOperation(self.page)
         self.recieve_operation = MailRecieveOperation(self.options.surrealdb_setting)
@@ -79,6 +82,13 @@ class DenbunMailClient:
             logger.info(f"Sending mail to: {to}, subject: {subject}")
             await self.session.ensure_logged_in()
             # メール送信の実装をここに追加
+            send_message = SendMailMessage(
+                to_addresses=[to],
+                cc_addresses=[],
+                subject=subject,
+                body=body,
+            )
+            await self.send_operation.send_mail(send_message)
         except Exception as e:
             logger.error(f"Failed to send mail: {str(e)}", exc_info=True)
             await self.close()
