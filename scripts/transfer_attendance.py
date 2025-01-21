@@ -136,7 +136,7 @@ if __name__ == "__main__":
     invoke(
         source="google",
         output_file="tmp/output.xlsx",
-        template_file="tests/attendance/data/template.xlsx",
+        template_file="tests/data/template.xlsx",
         month=1,
         start_date="2024-12-21",
         end_date="2025-01-20",

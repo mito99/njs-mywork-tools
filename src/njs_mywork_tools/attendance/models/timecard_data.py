@@ -26,6 +26,16 @@ class TimeCardData:
     def time_out_str(self) -> str:
         return self.time_out.strftime('%H:%M') if self.time_out else ''
 
+    def overtime_start_time_str(self) -> str:
+        if self.time_out and self.time_out > time(17, 30):
+            return '17:40'
+        return ''
+
+    def overtime_end_time_str(self) -> str:
+        if self.time_out and self.time_out > time(17, 30):
+            return self.time_out.strftime('%H:%M')
+        return ''
+
 
 class TimeCardDataList(list):
     def __init__(self, time_cards: List[TimeCardData]):

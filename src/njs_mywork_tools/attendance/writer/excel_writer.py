@@ -124,8 +124,8 @@ class ExcelWriter:
 
                 if data:
                     sheet.range(f"F{col}").value = data.work_type_str()
-                    sheet.range(f"L{col}").value = data.time_in_str()
-                    sheet.range(f"M{col}").value = data.time_out_str()
+                    sheet.range(f"L{col}").value = data.overtime_start_time_str()
+                    sheet.range(f"M{col}").value = data.overtime_end_time_str()
                     sheet.range(f"U{col}").value = (
                         "1" if data.work_type == "出勤" else ""
                     )
