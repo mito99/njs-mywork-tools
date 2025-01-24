@@ -57,6 +57,85 @@ class Database:
     async def rollback(self):
         await self.db.query("CANCEL TRANSACTION;")
 
+    async def upsert(self, collection: str, data: dict):
+        """
+        指定されたコレクションにデータをupsertします。
+        データのIDが存在する場合は更新、存在しない場合は新規作成を行います。
+
+        Args:
+            collection (str): コレクション名
+            data (dict): upsertするデータ（idキーを含む必要があります）
+
+        Returns:
+            dict: 作成または更新されたレコード
+        
+        Raises:
+            ValueError: データにidキーが含まれていない場合
+        """
+        if 'id' not in data:
+            raise ValueError("データにidキーが必要です")
+
+        existing_record = await self.find_by_id(collection, data['id'])
+        
+        if existing_record:
+            return await self.update(collection, data['id'], data)
+        else:
+            result = await self.create(collection, data)
+            return result
+
+    async def update(self, collection: str, id: str, data: dict):
+        """
+        指定されたコレクションの特定のレコードを更新します。
+
+        Args:
+            collection (str): コレクション名
+            id (str): 更新対象のレコードID
+            data (dict): 更新するデータ
+
+        Returns:
+            dict: 更新されたレコード
+        """
+        query = f"""
+        UPDATE type::thing($collection, $id) 
+        CONTENT $data 
+        RETURN AFTER
+        """
+        params = {
+            "collection": collection,
+            "data": data,
+            "id": id
+        }
+        
+        result = await self.query(query, params)
+        if result and len(result) > 0 and 'result' in result[0]:
+            return result[0]['result']
+        return None
+
+    async def find_by_id(self, collection: str, id: str):
+        """
+        指定されたコレクションから特定のIDのレコードを取得します。
+
+        Args:
+            collection (str): コレクション名
+            id (str): 取得対象のレコードID
+
+        Returns:
+            dict: 取得したレコード。見つからない場合はNone
+        """
+        query = f"""
+        SELECT * 
+        FROM type::thing($collection, $id)
+        """
+        params = {
+            "collection": collection,
+            "id": id
+        }
+        
+        result = await self.query(query, params)
+        if result and len(result) > 0 and 'result' in result[0]:
+            return result[0]['result'][0] if result[0]['result'] else None
+        return None
+
 if __name__ == "__main__":
     async def main():
         settings = Settings()

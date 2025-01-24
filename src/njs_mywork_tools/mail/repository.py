@@ -3,9 +3,10 @@ from typing import Any, Dict, List
 from uuid import uuid4
 
 from njs_mywork_tools.mail.models.entities import (AttachmentEntity,
+                                                   ContactEntity,
                                                    MailMessageEntity,
                                                    RecipientEntity,
-                                                   RecipientType)
+                                                   RecipientType, SenderEntity)
 from njs_mywork_tools.mail.models.message import MailMessage
 from njs_mywork_tools.settings import SurrealDBSetting
 from njs_mywork_tools.storage import Database
@@ -24,9 +25,17 @@ class MailRepository:
             await self.save(message)
     
     async def save(self, mail_message: MailMessage) -> None:
-        """メールメッセージをデータベースに保存する"""
+        """メールメッセージをデータベースに保存する"""        
         async with self.db:
-            async with self.db.transaction():            
+            async with self.db.transaction():
+                # 送信者エンティティの作成
+                sender_id = str(uuid4()).replace("-", "")
+                sender_entity = SenderEntity(
+                    id = sender_id,
+                    message_id=mail_message.id,
+                    email=mail_message.sender.email,
+                )
+                await self.db.create("mail_senders", sender_entity.model_dump())
 
                 # 受信者エンティティの作成
                 recipient_ids = []
@@ -34,8 +43,8 @@ class MailRepository:
                     id = str(uuid4()).replace("-", "")
                     recipient_entity = RecipientEntity(
                         id=id,
-                        mail_message_id=mail_message.id,
-                        email=recipient,
+                        message_id=mail_message.id,
+                        email=recipient.email,
                         recipient_type=RecipientType.TO,
                     )
                     # 受信者データを保存し、IDを配列に追加
@@ -46,12 +55,22 @@ class MailRepository:
                     id = str(uuid4()).replace("-", "")
                     recipient_entity = RecipientEntity(
                         id=id,
-                        mail_message_id=mail_message.id,
-                        email=recipient,
+                        message_id=mail_message.id,
+                        email=recipient.email,
                         recipient_type=RecipientType.CC,
                     )
                     await self.db.create("mail_recipients", recipient_entity.model_dump())
                     recipient_ids.append(id)
+
+                # メールコンタクト更新
+                contacts = [mail_message.sender, *mail_message.to_addresses, *mail_message.cc_addresses]
+                for contact in contacts:
+                    if contact.name is not None:
+                        contact_entity = ContactEntity(
+                            id=contact.email,
+                            name=contact.name,
+                        )
+                        await self.db.upsert("mail_contacts", contact_entity.model_dump())
 
                 # 添付ファイルエンティティの作成
                 attachment_ids = []
@@ -59,7 +78,7 @@ class MailRepository:
                     id = str(uuid4()).replace("-", "")
                     attachment_entity = AttachmentEntity(
                         id=id,
-                        mail_message_id=mail_message.id,
+                        message_id=mail_message.id,
                         file_path=attachment,
                     )
                     await self.db.create("mail_attachments", attachment_entity.model_dump())
@@ -69,14 +88,15 @@ class MailRepository:
                 message_entity = MailMessageEntity(
                     id=mail_message.id,
                     subject=mail_message.subject.replace(":", "\\:"),
-                    received_at=mail_message.received_at.isoformat(),
+                    mail_date=mail_message.mail_date.isoformat(),
                     body=mail_message.body,
-                    sender=mail_message.sender,
+                    sender=sender_entity,
                     recipients=[],
                     attachments=[]
                 )
                 message_entity_dict = {
                     **message_entity.model_dump(exclude={"recipients", "attachments"}),
+                    "sender": f"mail_senders:{sender_id}",
                     "recipients": [f"mail_recipients:{id}" for id in recipient_ids],
                     "attachments": [f"mail_attachments:{id}" for id in attachment_ids]
                 }
@@ -117,7 +137,7 @@ class MailRepository:
         mail_message = MailMessage(
             id=result['id'].split(":")[-1],
             subject=result['subject'],
-            received_at= datetime.fromisoformat(result['received_at']),
+            mail_date=datetime.fromisoformat(result['mail_date']),
             body=result['body'],
             sender=result['sender'],
             to_addresses=to_recipients,

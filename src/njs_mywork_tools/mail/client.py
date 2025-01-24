@@ -9,11 +9,11 @@ from playwright.async_api import (Browser, BrowserContext, Page,
 from pydantic import BaseModel
 
 from njs_mywork_tools.mail.core.session import SessionManager
-from njs_mywork_tools.mail.operations.recieve import (MailRecieveOperation,
-                                                      RecieveMessageResult)
-from njs_mywork_tools.mail.operations.search import MailSearchOperation
+from njs_mywork_tools.mail.models.message import MailMessage
+from njs_mywork_tools.mail.operations.receive_box import ReceiveBoxOperation
 from njs_mywork_tools.mail.operations.send import (MailSendOperation,
                                                    SendMailMessage)
+from njs_mywork_tools.mail.operations.sent_box import SentBoxOperation
 from njs_mywork_tools.settings import (DenbunSetting, GoogleSheetSetting,
                                        SurrealDBSetting)
 from njs_mywork_tools.utils.logger import setup_logger
@@ -40,8 +40,8 @@ class DenbunMailClient:
         self.context: Optional[BrowserContext] = None
         self.page: Optional[Page] = None
         self.session: Optional[SessionManager] = None
-        self.search_operation: Optional[MailSearchOperation] = None
-        self.recieve_operation: Optional[MailRecieveOperation] = None
+        self.receive_box_operation: Optional[ReceiveBoxOperation] = None
+        self.sent_box_operation: Optional[SentBoxOperation] = None
         self.send_operation: Optional[MailSendOperation] = None
 
     async def initialize(self):
@@ -55,8 +55,8 @@ class DenbunMailClient:
         self.page = await self.context.new_page()
         self.send_operation = MailSendOperation(self.page)
         self.session = SessionManager(self.page, self.options.denbun_setting)
-        self.search_operation = MailSearchOperation(self.page)
-        self.recieve_operation = MailRecieveOperation(self.options.surrealdb_setting)
+        self.receive_box_operation = ReceiveBoxOperation(self.page, self.options.surrealdb_setting)
+        self.sent_box_operation = SentBoxOperation(self.page, self.options.surrealdb_setting)
         logger.info("DenbunMailClient initialized successfully")
 
     async def __aenter__(self):
@@ -107,7 +107,8 @@ class DenbunMailClient:
         else:
             logger.info("Mail sent successfully")
 
-    async def search_mail(self, start_date: datetime, end_date: datetime, keyword: str):
+    async def search_receive_mailbox(
+        self, start_date: datetime, end_date: datetime, keyword: str):
         """Search mail using Denbun Mail"""
         if not self.session:
             logger.info("Session not initialized. Initializing...")
@@ -117,7 +118,7 @@ class DenbunMailClient:
                 f"Searching mail (start: {start_date}, end: {end_date}, keyword: {keyword})"
             )
             await self.session.ensure_logged_in()
-            await self.search_operation.search_messages(
+            await self.receive_box_operation.search_messages(
                 start_date=start_date, end_date=end_date, keyword=keyword
             )
         except Exception as e:
@@ -128,7 +129,7 @@ class DenbunMailClient:
         finally:
             await self.close()
 
-    async def receive_mail(
+    async def save_receive_mailbox(
         self, start_date: datetime, end_date: datetime, keyword: str
     ):
         """Receive mail using Denbun Mail"""
@@ -140,12 +141,16 @@ class DenbunMailClient:
                 f"Starting mail reception (start: {start_date}, end: {end_date}, keyword: {keyword})"
             )
             await self.session.ensure_logged_in()
-            messages = self.search_operation.search_messages_iter(
+            messages = await self.receive_box_operation.search_messages(
                 start_date=start_date, end_date=end_date, keyword=keyword
             )
-            async for message in messages:
-                result = await self.recieve_operation.recieve_message(message)
-                if result == RecieveMessageResult.ALREADY_EXISTS:
+            for message in messages:
+                # メール保存条件
+                if message.sender.name == "Slack":
+                    continue
+                
+                result = await self.receive_box_operation.persist_message(message)
+                if result.is_already_exists():
                     logger.info("Found existing message. Stopping reception.")
                     break
                 logger.debug(f"Received message: {message.subject}")
@@ -156,6 +161,42 @@ class DenbunMailClient:
             raise Exception(f"Failed to receive mail: {str(e)}")
         else:
             logger.info("Mail reception completed successfully")
+
+    async def save_sent_mailbox(
+        self, start_date: datetime, end_date: datetime, keyword: str):
+        """Save mail using Denbun Mail"""
+        if not self.session:
+            logger.info("Session not initialized. Initializing...")
+            await self.initialize()
+            
+        try:
+            logger.info(
+                f"Starting mail reception (start: {start_date}, end: {end_date}, keyword: {keyword})"
+            )
+            await self.session.ensure_logged_in()
+            messages: List[MailMessage] = await self.sent_box_operation.search_messages(
+                start_date=start_date, end_date=end_date, keyword=keyword
+            )
+            for message in messages:
+                
+                # 自分宛のメールは保存しない
+                to_emails = [to_address.email for to_address in message.to_addresses]
+                if message.sender.email in to_emails:
+                    continue
+                
+                # メールを永続化する
+                result = await self.sent_box_operation.persist_message(message)
+                if result.is_already_exists():
+                    logger.info("Found existing message. Stopping saving.")
+                    break
+                logger.debug(f"Saved message: {message.subject}")
+
+        except Exception as e:
+            logger.error(f"Failed to save mail: {str(e)}", exc_info=True)
+            await self.close()
+            raise Exception(f"Failed to save mail: {str(e)}")
+        else:
+            logger.info("Mail saving completed successfully")
 
 
 async def main():
