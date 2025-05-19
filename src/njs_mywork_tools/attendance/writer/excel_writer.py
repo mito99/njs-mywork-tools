@@ -105,7 +105,7 @@ class ExcelWriter:
 
             # 職印を押す
             today = datetime.now().strftime("%Y.%m.%d")
-            self._stamp_syokuin(sheet, "S4", "JS", today, self.employee.family_name)
+            self._stamp_syokuin(sheet, "T4", "JS", today, self.employee.family_name)
 
             # データ行を処理する
             for col in range(10, 41):
