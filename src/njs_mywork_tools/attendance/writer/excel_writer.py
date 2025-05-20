@@ -126,18 +126,18 @@ class ExcelWriter:
                     sheet.range(f"F{col}").value = data.work_type_str()
                     sheet.range(f"L{col}").value = data.overtime_start_time_str()
                     sheet.range(f"M{col}").value = data.overtime_end_time_str()
-                    sheet.range(f"U{col}").value = (
+                    sheet.range(f"V{col}").value = (
                         "1" if data.work_type == "出勤" else ""
                     )
-                    sheet.range(f"V{col}").value = (
+                    sheet.range(f"W{col}").value = (
                         "1" if data.work_type == "在宅" else ""
                     )
                 else:
                     sheet.range(f"F{col}").value = ""
                     sheet.range(f"L{col}").value = ""
                     sheet.range(f"M{col}").value = ""
-                    sheet.range(f"U{col}").value = ""
                     sheet.range(f"V{col}").value = ""
+                    sheet.range(f"W{col}").value = ""
 
             if output_path == self.template_path:
                 wb.save()
