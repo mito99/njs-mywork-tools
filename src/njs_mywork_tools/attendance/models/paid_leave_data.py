@@ -12,6 +12,44 @@ class PaidLeaveType(Enum):
     MORNING = "午前休"   # 午前休
     AFTERNOON = "午後休"  # 午後休
 
+    @classmethod
+    def from_work_type(cls, work_type: str) -> 'PaidLeaveType':
+        """
+        勤務タイプから有給休暇の種類を判定するファクトリメソッド
+
+        Args:
+            work_type (str): 勤務タイプを表す文字列
+
+        Returns:
+            PaidLeaveType: 対応する有給休暇の種類
+        """
+        if work_type in ('有休', '有給'):
+            return cls.FULL_DAY
+        
+        if work_type in ("午前休/在宅", "午前休/出勤"):
+            return cls.MORNING
+        
+        if work_type in ("在宅/午後休", "出勤/午後休"):
+            return cls.AFTERNOON
+        
+        raise ValueError(f"無効な勤務タイプです: {work_type}")
+
+    @classmethod
+    def is_valid_work_type(cls, work_type: str) -> bool:
+        """
+        与えられた勤務タイプが有給休暇の種類として有効かどうかを判定する
+
+        Args:
+            work_type (str): 勤務タイプを表す文字列
+
+        Returns:
+            bool: 有効な勤務タイプの場合はTrue、そうでない場合はFalse
+        """
+        try:
+            cls.from_work_type(work_type)
+            return True
+        except ValueError:
+            return False
 
 @dataclass
 class PaidLeaveData:
