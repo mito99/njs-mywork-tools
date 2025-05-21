@@ -12,13 +12,63 @@ class TimeCardData:
     time_out: Optional[time] = None
     
     def work_type_str(self) -> str:
-        if self.work_type in ('在宅', '出勤') :
+        if self.work_type in ('在宅', '出勤', '在宅/出勤', '出勤/在宅' ) :
             return '出勤'
         
         if self.work_type in ('有休', '有給'):
             return '有給休暇'
+
+        if self.work_type in ("午前休/在宅", "午前休/出勤"):
+            return "午前休"
+        
+        if self.work_type in ("在宅/午後休", "出勤/午後休"):
+            return "午後休"
         
         return ""
+    
+    def is_attended(self) -> bool:
+        """
+        出勤したかどうかを判定するメソッド。
+
+        Returns:
+            bool: 出勤した場合はTrue、それ以外の場合はFalse
+        """
+        return self.work_type in (
+            '出勤', 
+            '在宅/出勤', 
+            '出勤/在宅',
+            '午前休/出勤',
+            '出勤/午後休'
+        )
+
+    def is_home_work(self) -> bool:
+        """
+        在宅勤務かどうかを判定するメソッド。
+
+        Returns:
+            bool: 在宅勤務した場合はTrue、それ以外の場合はFalse
+        """
+        return self.work_type in (
+            '在宅',
+            '在宅/出勤',
+            '出勤/在宅',
+            '在宅/午前休',
+            '午後休/在宅'
+        )
+
+    def remarks_str(self) -> str:
+        """
+        備考を文字列で返却するメソッド。
+
+        Returns:
+            str: 備考の文字列。備考がない場合は空文字列を返す。
+        """
+        if self.work_type == '在宅/出勤':
+            return "午後出社"
+        if self.work_type == '出勤/在宅':
+            return "午前出社"
+        return ''
+
 
     def time_in_str(self) -> str:
         return self.time_in.strftime('%H:%M') if self.time_in else ''
