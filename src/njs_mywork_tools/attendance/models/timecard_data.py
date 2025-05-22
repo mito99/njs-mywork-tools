@@ -10,6 +10,7 @@ class TimeCardData:
     work_type: str
     time_in: Optional[time] = None
     time_out: Optional[time] = None
+    work_time: Optional[time] = None
     
     def work_type_str(self) -> str:
         if self.work_type in ('在宅', '出勤', '在宅/出勤', '出勤/在宅' ) :

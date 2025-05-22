@@ -100,6 +100,10 @@ class GoogleTimeCardReader(TimeCardReader):
                     datetime.strptime(row[4], "%H:%M").time() if len(row) > 4 else None
                 )
 
+                work_time = (
+                    datetime.strptime(row[5], "%H:%M").time() if len(row) > 5 else None
+                )
+
                 time_cards.append(
                     TimeCardData(
                         date=date,
@@ -107,6 +111,7 @@ class GoogleTimeCardReader(TimeCardReader):
                         work_type=work_type,
                         time_in=time_in,
                         time_out=time_out,
+                        work_time=work_time,
                     )
                 )
 
